@@ -1,0 +1,13 @@
+<ul>
+    <li><?= htmlspecialchars($user['name']) ?></li>
+    <li><?= htmlspecialchars($user['email']) ?></li>
+    <li><?= htmlspecialchars($user['password']) ?></li>
+    <li><?= htmlspecialchars($user['passwordConfirmation']) ?></li>
+    <li><?= htmlspecialchars($user['id']) ?></li>
+    <li><?= htmlspecialchars($user['city']) ?></li>
+</ul>
+
+<form action="/users/<?= $user['id'] ?>" method="post">
+    <input type="hidden" name="_METHOD" value="DELETE">
+    <input type="submit" value="Remove">
+</form>

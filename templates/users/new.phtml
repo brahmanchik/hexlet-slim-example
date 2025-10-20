@@ -1,0 +1,56 @@
+<!-- templates/users/new.phtml -->
+<?php if (!empty($flash['success'])): ?>
+    <?php foreach ($flash['success'] as $msg): ?>
+        <div class="flash-success"><?= htmlspecialchars($msg) ?></div>
+    <?php endforeach ?>
+<?php endif ?>
+<form action="/users" method="post">
+    <div>
+        <label>
+            Имя
+            <input type="text" name="user[name]" value="<?= htmlspecialchars($user['name']) ?>">
+        </label>
+        <?php if (isset($errors['name'])): ?>
+            <div><?= $errors['name'] ?></div>
+        <?php endif ?>
+    </div>
+    <div>
+        <label>
+            Email
+            <input type="email" required name="user[email]" value="<?= htmlspecialchars($user['email']) ?>">
+        </label>
+        <?php if (isset($errors['email'])): ?>
+            <div><?= $errors['email'] ?></div>
+        <?php endif ?>
+    </div>
+    <div>
+        <label>
+            Пароль
+            <input type="password" required name="user[password]" value="<?= htmlspecialchars($user['password']) ?>">
+        </label>
+        <?php if (isset($errors['password'])): ?>
+            <div><?= $errors['password'] ?></div>
+        <?php endif ?>
+    </div>
+    <div>
+        <label>
+            Подтверждение пароля
+            <input type="password" required name="user[passwordConfirmation]" value="<?= htmlspecialchars($user['passwordConfirmation']) ?>">
+        </label>
+    </div>
+    <div>
+        <label>
+            Город
+            <select name="user[city]" required>
+                <option value="">Select</option>
+                <option <?= $user['city'] === '3' ? 'selected' : '' ?> value="3">Москва</option>
+                <option <?= $user['city'] === '13' ? 'selected' : '' ?> value="13">Пенза</option>
+                <option <?= $user['city'] === '399' ? 'selected' : '' ?> value="399">Томск</option>
+            </select>
+        </label>
+        <?php if (isset($errors['city'])): ?>
+            <div><?= $errors['city'] ?></div>
+        <?php endif ?>
+    </div>
+    <input type="submit" value="Sign Up">
+</form>

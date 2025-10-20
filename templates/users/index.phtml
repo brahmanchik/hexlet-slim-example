@@ -1,0 +1,37 @@
+<?php
+    $str = file_get_contents(__DIR__ . '/bd.txt');
+    $listUsers = (json_decode($str, true));
+?>
+<h1>List users</h1>
+<?php
+    $arrUsers = json_decode($users, true);
+    if (!empty($arrUsers)) {
+        foreach ($arrUsers as $user) {
+            echo "<a href=\"/users/{$user['id']}\">Пользователь: </a>{$user['name']}<br>";
+        }
+    }
+echo $_SESSION['name'] ?? "кажется вы не авторизованы";
+    echo '<br>';
+
+?>
+<a href="users/new">Добавить нового пользователя</a>
+
+<h2>А тут можно авторизоваться!</h2>
+<form action="/personal-page" method="post">
+        <label>
+            Email
+            <input type="email" required name="user[email]" value="">
+        </label>
+        <?php if (isset($errors['email'])): ?>
+            <div><?= $errors['email'] ?></div>
+        <?php endif ?>
+    <input type="submit" value="log in">
+</form>
+<h2>А тут выйти из аккаунта</h2>
+<form action="/exit" method="post">
+
+    <?php if (isset($errors['email'])): ?>
+        <div><?= $errors['email'] ?></div>
+    <?php endif ?>
+    <input type="submit" value="log out">
+</form>

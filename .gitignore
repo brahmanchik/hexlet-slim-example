@@ -3,3 +3,5 @@
 /.DS_Store
 /.idea/
 /.env
+/public/database.sqlite
+/templates/users/bd.txt

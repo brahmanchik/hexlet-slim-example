@@ -1,0 +1,16 @@
+<h1>Личный кабинет</h1>
+<?php
+$container->set(\PDO::class, function () {
+$conn = new \PDO('sqlite:hexlet');
+$conn->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+return $conn;
+});
+
+$carRepository = new CarRepository($container->get(\PDO::class));
+$carRepository = $container->get(CarRepository::class);
+$carControler = $container->get(CarControler::class);
+$initFilePath = implode('/', [dirname(__DIR__), 'init.sql']);
+$initSql = file_get_contents($initFilePath);
+$container->get(\PDO::class)->exec($initSql);
+
+$app = AppFactory::createFromContainer($container);
