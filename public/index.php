@@ -2,13 +2,18 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
+use App\Car;
+use App\CarRepository;
+use App\CarValidator;
 use Slim\Factory\AppFactory;
 use DI\Container;
 use Slim\Middleware\MethodOverrideMiddleware;
 
+
 session_start();
 
 $container = new Container();
+
 $container->set(\PDO::class, function () {
     $conn = new \PDO('sqlite:database.sqlite'); //соеденили с БД и подключились к ФАЙЛУ ИЛИ создали его если его не было
     $conn->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
@@ -22,6 +27,7 @@ $container->set('flash', function () {
     return new \Slim\Flash\Messages();
 });
 
+
 $initFilePath = implode('/', [dirname(__DIR__), 'public/init.sql']);
 $initSql = file_get_contents($initFilePath);
 $container->get(\PDO::class)->exec($initSql);
@@ -32,78 +38,7 @@ $router = $app->getRouteCollector()->getRouteParser();
 $app->addErrorMiddleware(true, true, true);
 
 
-class CarRepository
-{
-    private \PDO $conn;
 
-    public function __construct(\PDO $conn)
-    {
-        $this->conn = $conn;
-    }
-
-    public function getEntities(): array
-    {
-        $cars = [];
-        $sql = "SELECT * FROM cars";
-        $stmt = $this->conn->query($sql);
-
-        while ($row = $stmt->fetch()) {
-            $car = Car::fromArray([$row['make'], $row['model']]);
-            $car->setId($row['id']);
-            $cars[] = $car;
-        }
-
-        return $cars;
-    }
-
-    public function find(int $id): ?Car
-    {
-        $sql = "SELECT * FROM cars WHERE id = ?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute([$id]);
-        if ($row = $stmt->fetch())  {
-            $car = Car::fromArray([$row['make'], $row['model']]);
-            $car->setId($row['id']);
-            return $car;
-        }
-
-        return null;
-    }
-
-    public function save(Car $car): void {
-        if ($car->exists()) {
-            $this->update($car);
-        } else {
-            $this->create($car);
-        }
-    }
-
-    private function update(Car $car): void
-    {
-        $sql = "UPDATE cars SET make = :make, model = :model WHERE id = :id";
-        $stmt = $this->conn->prepare($sql);
-        $id = $car->getId();
-        $make = $car->getMake();
-        $model = $car->getModel();
-        $stmt->bindParam(':make', $make);
-        $stmt->bindParam(':model', $model);
-        $stmt->bindParam(':id', $id);
-        $stmt->execute();
-    }
-
-    private function create(Car $car): void
-    {
-        $sql = "INSERT INTO cars (make, model) VALUES (:make, :model)";
-        $stmt = $this->conn->prepare($sql);
-        $make = $car->getMake();
-        $model = $car->getModel();
-        $stmt->bindParam(':make', $make);
-        $stmt->bindParam(':model', $model);
-        $stmt->execute();
-        $id = (int) $this->conn->lastInsertId();
-        $car->setId($id);
-    }
-}
 
 class Validator {
     public function validate (array $data) {
@@ -113,7 +48,77 @@ class Validator {
         return [];
     }
 }
+//Роутинг cars
+$app->get('/ca  rs', function ($request, $response) {
 
+    $carRepository = $this->get(CarRepository::class);
+
+    $cars = $carRepository->getEntities();
+    /** @var \Slim\Flash\Messages $flash */
+    $flash = $this->get('flash');
+    $flash->addMessage('success','hello world!');
+    $messages = $flash->getMessages();
+
+    $params = [
+        'cars' => $cars,
+        'flash' => $messages
+    ];
+
+    return $this->get('renderer')->render($response, 'cars/index.phtml', $params);
+})->setName('cars.index');
+
+$app->get('/cars/{id:[0-9]+}', function ($request, $response, $args) {
+    $carRepository = $this->get(CarRepository::class);
+    $id = $args['id'];
+    $car = $carRepository->find($id);
+
+    if (is_null($car)) {
+        return $response->write('Page not found')->withStatus(404);
+    }
+
+    $messages = $this->get('flash')->getMessages();
+
+    $params = [
+        'car' => $car,
+        'flash' => $messages
+    ];
+
+    return $this->get('renderer')->render($response, 'cars/show.phtml', $params);
+})->setName('cars.show');
+
+$app->get('/cars/new', function ($request, $response) {
+    $params = [
+        'car' => new Car(),
+        'errors' => []
+    ];
+
+    return $this->get('renderer')->render($response, 'cars/new.phtml', $params);
+})->setName('cars.create');
+
+$app->post('/cars', function ($request, $response) use ($router) {
+    $carRepository = $this->get(CarRepository::class);
+    $carData = $request->getParsedBodyParam('car');
+
+    $validator = new CarValidator();
+    $errors = $validator->validate($carData);
+
+    if (count($errors) === 0) {
+        $car = Car::fromArray([$carData['make'], $carData['model']]);
+        $carRepository->save($car);
+        $this->get('flash')->addMessage('success', 'Car was added successfully');
+        return $response->withRedirect($router->urlFor('cars.index'));
+    }
+
+    $params = [
+        'car' => $carData,
+        'errors' => $errors
+    ];
+
+    return $this->get('renderer')->render($response->withStatus(422), 'cars/new.phtml', $params);
+})->setName('cars.store');
+
+
+//Роутинг users
 $app->get('/users', function ($request, $response) {
     $this->get('flash')->addMessage('success', 'User was added successfully');
 
@@ -239,7 +244,9 @@ $app->get('/users/{id}', function ($request, $response, $args) {
     }
     //var_dump($user);
     $params = [
-        'user' => ['name' => $user['name'], 'email' => $user['email'], 'password' => $user['password'], 'passwordConfirmation' => $user['passwordConfirmation'], 'city' => $user['city'], 'id' => $user['id']]
+        'user' => ['name' => $user['name'], 'email' => $user['email'], 'password' => $user['password'], 'passwordConfirmation' => $user['passwordConfirmation'], 'city' => $user['city'], 'id' => $user['id']],
+        //тут еще надо наверно car предавать те которые пользователю принадлежат
+        'car' => ['color' => '', 'model' => '']
     ];
     return $this->get('renderer')->render($response, "users/user.phtml", $params);
 });

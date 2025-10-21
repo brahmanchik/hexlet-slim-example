@@ -5,3 +5,4 @@
 /.env
 /public/database.sqlite
 /templates/users/bd.txt
+ database.sqlite

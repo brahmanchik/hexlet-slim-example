@@ -1,13 +1,20 @@
 <ul>
-    <li><?= htmlspecialchars($user['name']) ?></li>
-    <li><?= htmlspecialchars($user['email']) ?></li>
-    <li><?= htmlspecialchars($user['password']) ?></li>
-    <li><?= htmlspecialchars($user['passwordConfirmation']) ?></li>
-    <li><?= htmlspecialchars($user['id']) ?></li>
-    <li><?= htmlspecialchars($user['city']) ?></li>
+    <li>Имя: <?= htmlspecialchars($user['name']) ?></li>
+    <li>Эл почта: <?= htmlspecialchars($user['email']) ?></li>
+    <li>Пароль: <?= htmlspecialchars($user['password']) ?></li>
+    <li>id: <?= htmlspecialchars($user['id']) ?></li>
+    <li>Город: <?= htmlspecialchars($user['city']) ?></li>
 </ul>
 
 <form action="/users/<?= $user['id'] ?>" method="post">
     <input type="hidden" name="_METHOD" value="DELETE">
-    <input type="submit" value="Remove">
+    <input type="submit" value="Remove user">
 </form>
+
+<form action="/car" method="post">
+    <h2>Добавить авто для пользователя</h2>
+    <input type="text" name="car[color]" value="<?= htmlspecialchars($car['color']) ?>">
+    <input type="text" name="car[model]" value="<?= htmlspecialchars($car['model']) ?>">
+    <input type="submit" value="Добавить авто">
+</form>
+<h2>Автомобили пользователя</h2>
